@@ -67,7 +67,7 @@ summary(model4)
 #significant proportion of the Total variance of observed data.
 
 
-#Our coefficients's confidence interval are following.
+#Our coefficients's 95 percents confidence interval are following.
 confint(model4)
 
 
@@ -93,10 +93,13 @@ plot(model4, 5)
 #data points that has error when they were collected, so we leave them in dataset we use.
 
 
+#“Is an automatic or manual transmission better for MPG”
+#
+qplot(factor(am), mpg, color=factor(am), data=x)
 
-
-
-#remain
-#Did the student quantify the uncertainty in their conclusions and/or perform an inference correctly?
-#detail why the question(s) is (are) not answerable?
+#"Quantify the MPG difference between automatic and manual transmissions"  
+#From our final model, we can say about questions of interest that
+#manual transmission is better for mpg than automatic
+#And about quantity of it, When holding other variables constant, 
+#the expected change in mpg value from automatic to manual is increase 6.7980 Miles/gallon
 

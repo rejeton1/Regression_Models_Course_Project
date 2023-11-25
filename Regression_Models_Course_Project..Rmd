@@ -1,0 +1,170 @@
+---
+title: "Regression Models Course Project"
+author: "kosw"
+date: "2023-11-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary
+
+In this report, we explored the regression model explaining car's mpg(Miles/gallon) using 'mtcars' dataset. We excluded several variables among 10 variables(except mpg, response variable) that mtcars dataset contains using correlation between variables, vif. After that, we diagnosed several things about residuals with some diagnostic plots. Conclusionally, we got significant multivariate regression model explaining mpg variable with 3 variables : am, vs, carb (also with intercept)
+
+## Load Data
+
+First, Load some packages we will use in this research.
+```{r, results='hide', message=FALSE}
+library(ggplot2)
+library(GGally)
+library(car)
+```
+
+And Load Dataset we will use : mtcars
+```{r}
+x <- mtcars
+```
+
+## Exploratory Data Analysis
+
+This dataset was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models). This data has 32 observations on 11 (numeric) variables.
+
+And here, we will see the relationships between MPG variable and the rest of variables.
+
+For exploration of the relationship between all variables briefly, let's make an pair plot!
+```{r, echo=FALSE}
+ggpairs(x)
+```
+
+
+## First Model
+
+For our first regression model, we will exclude one of two variables that has correlation over 0.8.
+It is because two variables that has strong correlation may explain reponse variable similarly, and including
+both variable can decrease the estimation accuracy of each others.
+When two variable has correlation over 0.8, we will remove one that has less correlation with 'am' variable because
+'am' variable is variable we interested in.
+In this way, here we will exclude 2 variables : disp, cyl
+
+Then we can make first model including all of the rest of variables.
+```{r}
+model1 <- lm(mpg ~ am+hp+drat+wt+qsec+vs+gear+carb, x)
+```
+
+```{r, echo=FALSE}
+summary(model1)$coef
+```
+
+But in this model, only one variable among 9 is siginificant - surely problem!!! 
+It is presumably because, we include too many variables, so they decrease the accuracy of estimation.
+So We need to exclude a few more variables.
+Which variable will we exclude?
+To get significant conclusion, we will exclude variable that has the strongest correlation with other variables.
+We can see it through vif.
+```{r}
+vif(model1)
+```
+#Let's exclude the largest of vif : wt
+
+
+## Second Model
+
+By excluding 'wt' variable, we can make our second model.
+```{r}
+model2 <- lm(mpg ~ am+hp+drat+qsec+vs+gear+carb, x)
+```
+
+
+```{r, echo=FALSE}
+summary(model2)$coef
+```
+
+But still only one variable is significant.
+So, excluding an additional variable with large vif in the same way before : gear
+```{r}
+vif(model2)
+```
+
+
+## Third Model
+
+By excluding 'gear' variable, we can make third model.
+
+```{r}
+model3 <- lm(mpg ~ am+hp+drat+qsec+vs+carb, x)
+```
+
+
+```{r, echo=FALSE}
+summary(model3)$coef
+```
+And, also not all variables are significant.
+So, repeat this method until all variables are signigicant, we get out final model.
+
+
+## Final Model
+
+Final model is following.
+```{r}
+model4 <- lm(mpg ~ am+vs+carb, x)
+```
+
+
+```{r, echo=FALSE}
+summary(model4)$coef
+```
+
+In this model, all regressors are significant.
+
+Let's try anova to check each variables are significant once more compared with several nested models.
+
+```{r}
+model41 <- lm(mpg ~ am, x)
+model42 <- lm(mpg ~ am+vs, x)
+
+anova(model41, model42, model4)
+```
+All coefficient are significant so, It seems better that we use our final model.
+
+
+## Residual Plot and Diagnostics
+
+Let's make some diagnostic plot including residual plot and check several things about our data points.
+```{r}
+plot(model4, 1)
+```
+First, from residual plot,it seems that the residuals have mean about 0 and don't have specific pattern.
+It meets the assumption of the linear model.
+
+```{r}
+plot(model4, 2)
+```
+And from residual Q-Q plot, it seems that the distrbution of residuals are almost normal.
+
+```{r}
+shapiro.test(resid(model4))
+```
+In shapiro.test, p-value is over 0.05, so we fail to reject the null hypothesis : this distribution is normally distributted.
+So we can say our residuals are normal.
+
+
+```{r}
+plot(model4, 5)
+```
+From Residual vs Leverage plot, The largest leverage point has residual near zero. So, that data point conform to regression line.
+
+## Conclusion
+
+From final model, we can say 4 thing from our conclusion of 4 coefficients.
+
+First, all regressor are zero('automatic'/'V-shaped Engine'/'0 carburetors), the expected value of mpg is 19.5174 Miles/gallon
+Second, When our am variable(Transmisson) goes automatic to manual holding other variables constant,the expected change in mpg value is increase 6.7980 Miles/gallon
+Third, When our vs variable(Engine) goes 'V-shaped' to 'straight' holding other variables constant, the expected change in mpg value is increase 4.1957 Miles/gallon.
+Finally, One more carburetor holding other variables constant, the expected change in mpg value is decrease -1.4308 Miles/gallon.
+
+And our model's R Squared value is '', which means that our regression model is explaining significant proportion of the Total variance of observed data.
+
+About questions of interest("Is an automatic or manual transmission better for MPG?","Quantify the MPG difference between automatic and manual transmissions"), we can say that manual transmission is better for mpg than automatic and about quantity of it, when holding other variables constant, the expected change in mpg value from automatic to manual is increase 6.7980 Miles/gallon).
+
